@@ -1,4 +1,4 @@
-# GLIDER – drone and steel-glide firmware for the M-VAVE FM-1
+# GLIDER – drone synth firmware for the M-VAVE FM-1
 
 GLIDER is a custom firmware for the **M-VAVE FM-1**. It turns the FM-1 into a
 drone instrument: white keys latch tones on and off, black keys glide them
@@ -40,7 +40,7 @@ The full manual is [GLIDER.md](GLIDER.md).
 ## Install
 
 Downloads (workbench page with this firmware and the original V15 recovery
-image) are on [subcity.at](https://subcity.at). Open the page in Chrome or
+image) are on [subcity.at/fm1-glider](https://subcity.at/fm1-glider/). Open the page in Chrome or
 Edge, connect the FM-1 by USB and use *Device update*; the first install from
 the stock firmware needs *Recovery & force update*.
 
