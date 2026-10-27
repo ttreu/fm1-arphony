@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception */
 #include "instrument.h"
 #include "fm1_engine_control.h"
+#include "steel.h"
 #include <string.h>
 #ifdef FM1_HOST_TEST
 #include <stdatomic.h>
@@ -319,8 +320,16 @@ int groove_midi_clock_accept(unsigned source, uint8_t status)
 void fm1_app_midi_received(unsigned source, const uint8_t *m, size_t n)
 {
     if (source >= 3 || !m || !n || n > 3) return;
+#if FM1_STEEL
+    if (m[0] == 0xf8 || m[0] == 0xfc) steel_midi_clock(m[0], fm1_millis());
+#endif
     unsigned clock = m[0] == 0xf8 || m[0] == 0xfa || m[0] == 0xfb || m[0] == 0xfc || m[0] == 0xf2;
     if (clock && !groove_midi_clock_accept(source, m[0])) return;
+#if FM1_STEEL
+    /* Notes play GLIDER; the SDK's own sound engines stay silent. */
+    if (m[0] < 0xf0) steel_midi_message(m, n);
+    else
+#endif
     (void)fm1_midi_post(m, n);
     if (m[0] == 0xff) enqueue(2, 0, (config.flags | config.thru) & 7U, 0xff, 0, 0);
     if (((config.thru >> 3) & 3U) == source && m[0] != 0xff && (m[0] < 0xf0 || clock)) {

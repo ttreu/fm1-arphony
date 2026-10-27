@@ -340,6 +340,9 @@ EXPORT("sim_select") int sim_select(unsigned track, unsigned source)
     }
     return 0;
 }
+/* GLITCH DRUMS test hooks. */
+#include "steel_drums.h"
+EXPORT("sim_drum_steps") unsigned sim_drum_steps(unsigned slot) { return steel_drums_steps(slot); }
 EXPORT("sim_block_frames") unsigned sim_block_frames(void) { return FM1_BLOCK_FRAMES; }
 /* Read-only acceptance state; note 255 means the arpeggiator gate is closed. */
 extern unsigned groove_arp_test_note(unsigned track);
