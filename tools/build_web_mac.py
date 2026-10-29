@@ -70,7 +70,7 @@ def main():
     web = (ROOT / 'sdk/Update.html.in').read_text(encoding='utf-8')
     web = re.sub(r'<a\b[^>]*href="/\*FM1_SOURCE_URL\*/"[^>]*>(.*?)</a>', r'<span>\1 (local build)</span>', web)
     notices = ['APP: GPLv3 with the FM1 SDK linking exception; no warranty. SDK and firmware resources have separate '
-               'redistribution terms in THIRD_PARTY.md. Source: (local build, GLIDER fork)']
+               'redistribution terms in THIRD_PARTY.md. Source: (local build, ARPHONY fork)']
     if package_json:
         notices.append('FM-1 V15 recovery firmware: https://www.m-vave.com/download (PC Firmware / FM-1 V15). '
                        'Distributed by M-VAVE under Apache-2.0. See THIRD_PARTY.md.')
@@ -88,10 +88,10 @@ def main():
     }
     for key, value in replacements.items():
         web = web.replace(key, value)
-    web = web.replace('<title>FM1 工作台</title>', '<title>FM1 GLIDER</title>')
+    web = web.replace('<title>FM1 工作台</title>', '<title>FM1 ARPHONY</title>')
     if re.search(r'/\*FM1_[A-Z_]+\*/', web):
         fail('Unexpanded HTML placeholder.')
-    output = ROOT / ('build/official-web/FM1-GLIDER.html' if package_json else 'build/preview/index.html')
+    output = ROOT / ('build/official-web/FM1-ARPHONY.html' if package_json else 'build/preview/index.html')
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(web, encoding='utf-8')
     print(f'Preview: {output}')

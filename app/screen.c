@@ -3,11 +3,10 @@
 #include "fm_patch.h"
 #include "version.h"
 #include "fm1_engine_control.h"
-#include "steel.h"
-#include "steel_drums.h"
+#include "arp.h"
 #include <string.h>
-#if FM1_STEEL
-#include "steel_ui.inc"
+#if FM1_ARP
+#include "arp_ui.inc"
 #else
 enum {
     BACK = 0x0000,
@@ -2977,4 +2976,4 @@ static void algorithm_draw(unsigned algorithm, unsigned muted)
         number(x + 8, y + 3, i + 1, 1, 1, muted & (1U << i) ? DIM : BACK, bg);
     }
 }
-#endif /* FM1_STEEL */
+#endif /* FM1_ARP */

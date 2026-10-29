@@ -340,9 +340,15 @@ EXPORT("sim_select") int sim_select(unsigned track, unsigned source)
     }
     return 0;
 }
-/* GLITCH DRUMS test hooks. */
-#include "steel_drums.h"
-EXPORT("sim_drum_steps") unsigned sim_drum_steps(unsigned slot) { return steel_drums_steps(slot); }
+/* ARPHONY test hooks: transport and sequencer position. */
+#include "arp.h"
+EXPORT("sim_arp_running") unsigned sim_arp_running(void) { return arp_running(); }
+EXPORT("sim_arp_chord") unsigned sim_arp_chord(void) { return arp_chord_position(); }
+EXPORT("sim_arp_step") unsigned sim_arp_step(void) { return arp_step_position(); }
+EXPORT("sim_arp_rejected") unsigned sim_arp_rejected(void) { return arp_random_rejected(); }
+EXPORT("sim_arp_gated") unsigned sim_arp_gated(void) { return arp_riff_gated(); }
+EXPORT("sim_arp_count") uint32_t sim_arp_count(void) { return arp_note_count(); }
+EXPORT("sim_arp_last_note") int sim_arp_last_note(unsigned layer) { return arp_last_note(layer); }
 EXPORT("sim_block_frames") unsigned sim_block_frames(void) { return FM1_BLOCK_FRAMES; }
 /* Read-only acceptance state; note 255 means the arpeggiator gate is closed. */
 extern unsigned groove_arp_test_note(unsigned track);

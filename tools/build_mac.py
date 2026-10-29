@@ -29,8 +29,9 @@ USER_BYTES = 536576
 UPDATE_FAMILY = 7
 FROZEN = 'sdk/lib/libfm1_engine.a'
 # APP audio-path functions added by this fork; they must run from SRAM.
-APP_AUDIO_SYMBOLS = ['steel_render', 'render_voice', 'steel_fx', 'steel_fx_post', 'steel_reverb', 'steel_drums_render',
-                     'trigger', 'voice_sample', 'on_tick', 'sea_group', 'sea_next', 'schedule', 'steel_drums_cut', 'update']
+APP_AUDIO_SYMBOLS = ['arp_render', 'render_voice', 'steel_fx', 'steel_fx_post', 'steel_reverb', 'sequencer',
+                     'play_tick', 'chord_change', 'riff_step', 'bass_hit', 'bass_span', 'voice_start', 'release_all',
+                     'arp_midi_note', 'midi_off', 'arp_note']
 # APP audio functions whose direct calls must all stay inside internal SRAM.
 SRAM_CALL_CHECK = APP_AUDIO_SYMBOLS + ['groove_midi_note', 'groove_midi_track_reset', 'fm1_output_mix',
                                        'fm1_audio_irq', 'fm1_audio_copy']
@@ -653,7 +654,9 @@ def main():
     wine.run('pi32v2-ld.exe', link, BUILD)
     test_firmware(wine, synth, extra)
     output = package_firmware(wine, product)
-    print(f'Firmware: {output}')
+    named = output.with_name('FM1-ARPHONY.fwsc')
+    shutil.copyfile(output, named)
+    print(f'Firmware: {named}')
     print(f'SHA-256:  {sha256_file(output)}')
     write_update_page(output, product, release, build_id)
 

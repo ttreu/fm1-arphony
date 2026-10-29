@@ -1,5 +1,14 @@
 /* SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception */
 #include "fm_patch.h"
+#include "arp.h"
+#if FM1_ARP
+/* ARPHONY never plays the DX7 engine (its tracks are switched off), so the
+ * 128 factory voices (10 KB Flash, 16 KB SRAM) are left out: every program
+ * reads one silent placeholder voice. */
+static const uint8_t factory_silent[128];
+FM1_DSP_CODE const uint8_t *groove_fm_factory_raw(unsigned program) { (void)program; return factory_silent; }
+FM1_DSP_CODE void groove_fm_factory(uint8_t p[156], unsigned program) { groove_fm_unpack(p, groove_fm_factory_raw(program)); }
+#else
 #include "fm_factory.inc"
 
 /* Expand once during startup, before the audio owners are running. MIDI
@@ -30,3 +39,4 @@ FM1_DSP_CODE void groove_fm_factory(uint8_t p[156], unsigned program)
 {
     groove_fm_unpack(p,groove_fm_factory_raw(program));
 }
+#endif /* FM1_ARP */

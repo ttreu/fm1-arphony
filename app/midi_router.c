@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception */
 #include "instrument.h"
 #include "fm1_engine_control.h"
-#include "steel.h"
+#include "arp.h"
 #include <string.h>
 #ifdef FM1_HOST_TEST
 #include <stdatomic.h>
@@ -126,6 +126,13 @@ FM1_AUDIO_CODE void groove_midi_note(unsigned track, unsigned note, unsigned vel
     if (!groove_midi_mode(track)) return;
     unsigned ch = (config.channel[track >> 1] >> (4U * (track & 1U))) & 15U;
     enqueue(track & 1U, track, config.flags & 7U, (velocity ? 0x90U : 0x80U) | ch, note, velocity);
+}
+/* ARPHONY MIDI out (audio owner): a note on the FM1's output ports. Owner
+ * 16 + channel keeps the router's held-note bookkeeping per channel. */
+FM1_AUDIO_CODE void arp_midi_note(unsigned channel, unsigned note, unsigned velocity)
+{
+    channel &= 15U;
+    enqueue(1, 16U + channel, config.flags & 7U, (velocity ? 0x90U : 0x80U) | channel, note & 127U, velocity & 127U);
 }
 FM1_AUDIO_CODE void groove_midi_track_reset(unsigned track)
 { enqueue(track & 1U, track, config.flags & 7U, 0xf6, 0, 0); }
@@ -320,14 +327,14 @@ int groove_midi_clock_accept(unsigned source, uint8_t status)
 void fm1_app_midi_received(unsigned source, const uint8_t *m, size_t n)
 {
     if (source >= 3 || !m || !n || n > 3) return;
-#if FM1_STEEL
-    if (m[0] == 0xf8 || m[0] == 0xfc) steel_midi_clock(m[0], fm1_millis());
+#if FM1_ARP
+    if (m[0] == 0xf8 || m[0] == 0xfa || m[0] == 0xfb || m[0] == 0xfc) arp_midi_clock(m[0], fm1_millis());
 #endif
     unsigned clock = m[0] == 0xf8 || m[0] == 0xfa || m[0] == 0xfb || m[0] == 0xfc || m[0] == 0xf2;
     if (clock && !groove_midi_clock_accept(source, m[0])) return;
-#if FM1_STEEL
-    /* Notes play GLIDER; the SDK's own sound engines stay silent. */
-    if (m[0] < 0xf0) steel_midi_message(m, n);
+#if FM1_ARP
+    /* Notes choose ARPHONY chords; the SDK's own sound engines stay silent. */
+    if (m[0] < 0xf0) arp_midi_message(m, n);
     else
 #endif
     (void)fm1_midi_post(m, n);

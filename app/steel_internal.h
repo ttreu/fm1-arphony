@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception */
-/* Private GLIDER state shared by the control task and the audio owner. */
+/* Effects (tape echo, ladder filter, delay, shimmer reverb) inherited from
+ * GLIDER, and helpers shared by the ARPHONY control task and audio owner. */
 #ifndef FM1_STEEL_INTERNAL_H
 #define FM1_STEEL_INTERNAL_H
-#include "steel.h"
+#include "fm1.h"
 
 #ifdef FM1_HOST_TEST
 #define STEEL_BARRIER() __asm__ volatile("" ::: "memory")
@@ -35,19 +36,6 @@ struct steel_patch {
     float rev_decay, rev_damp, rev_shimmer, rev_mix, rev_dry;        /* shimmer plate; dry gain */
     float bpm;
 };
-/* Voice commands: control writes target/gate, then bumps the serials. */
-struct steel_command {
-    volatile float target;           /* MIDI pitch in semitones */
-    volatile float target2;          /* oscillator 2 (the interval voice) */
-    volatile float pan;              /* -0.5 (left) .. 0.5, by key */
-    volatile uint8_t gate, glide_serial, note_serial;
-    volatile uint8_t fade;           /* 1: release within ~30 ms (CPU guard) */
-};
-extern struct steel_patch steel_patches[2];
-extern volatile uint8_t steel_patch_index;
-extern struct steel_command steel_commands[STEEL_VOICES];
-/* Voices still sounding a release tail (read by the control task). */
-uint16_t steel_ringing(void);
 /* Effects on the stereo voice bus, in place (audio owner). */
 /* `send` (mono, may be NULL) feeds the tape echo / the reverb in addition to
  * the bus: the drum track's per-slot sends. */

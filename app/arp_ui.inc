@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-3.0-only WITH GPL-3.0-linking-exception */
-/* GLIDER panel and LCD: replaces the FM1 Open screen (screen.c includes
- * this file when FM1_STEEL is set). It keeps the painter of screen.c (band
+/* ARPHONY panel and LCD: replaces the FM1 Open screen (screen.c includes
+ * this file when FM1_ARP is set). It keeps the painter of screen.c (band
  * rendering, 5x7 font, knob footer) and the entry points the SDK, transfer.c
  * and the browser simulator call. */
 enum {
@@ -10,7 +10,11 @@ enum {
     ACCENT = 0x07ff,
     DIM = 0x738e,
     GREEN = 0x07e0,
-    AMBER = 0xfd20
+    AMBER = 0xfd20,
+    FOOT = 0x18e4,   /* ARPHONY footer: deep blue-grey */
+    MUTED = 0x8c73,
+    WHITE = 0xffff,
+    INK = 0x18c5     /* text on the light stage colours */
 };
 /* Five columns per glyph, bit 0 at the top. Digits followed by uppercase. */
 static const uint8_t font[36][5] = {
@@ -142,7 +146,18 @@ static unsigned encoder_active(const int16_t values[7])
 #ifdef FM1_HOST_TEST
 static char web_knobs[4][2][16];
 #endif
-static void knob(unsigned col, const char *label, const char *value, uint16_t color)
+/* ARPHONY knobs: four boxes in a row, like the knobs on the panel, a shade
+ * darker than the stage. A box names its function; while its knob turns
+ * (and 1.5 s after) it shows the value instead, large. */
+static uint16_t darker(uint16_t c)
+{
+    unsigned r = (c >> 11) & 31U, g = (c >> 5) & 63U, b = c & 31U;
+    r = r * 13U / 16U; g = g * 13U / 16U; b = b * 13U / 16U;
+    return (uint16_t)(r << 11 | g << 5 | b);
+}
+enum { BOX_Y = 24, BOX_H = 46, BOX_W = 110, BOX_GAP = 4 };
+/* K1 K2 in the first row, K3 K4 in the second. */
+static void knob(unsigned col, const char *label, const char *value, uint16_t bg, uint16_t ink, unsigned show_value)
 {
 #ifdef FM1_HOST_TEST
     if (col < 4) {
@@ -153,19 +168,49 @@ static void knob(unsigned col, const char *label, const char *value, uint16_t co
         memcpy(web_knobs[col][1], value, n);
     }
 #endif
-    if (paint_rendering && (paint_top >= 227 || paint_top + PAINT_ROWS <= 195)) return;
-    uint32_t sig =
-        signature(signature(color, label, (unsigned)strlen(label)), value, (unsigned)strlen(value));
+    if (col > 3) return;
+    unsigned x = col & 1U ? 8U + BOX_W + BOX_GAP : 8U, y = BOX_Y + (col & 2U ? BOX_H + BOX_GAP : 0U);
+    if (paint_rendering && (paint_top >= y + BOX_H || paint_top + PAINT_ROWS <= y)) return;
+    uint32_t sig = signature(signature((uint32_t)bg << 16 | ink | show_value << 31, label, (unsigned)strlen(label)),
+                             show_value ? value : "", show_value ? (unsigned)strlen(value) : 0U);
     if (cache->foot_cache[col] == sig)
         return;
     cache->foot_cache[col] = sig;
-    unsigned x = 6 + 59 * col;
-    paint_fill(x, 195, 54, 32, BACK);
-    paint_fill(x, 195, 54, 2, color);
-    text(x, 200, label, 1, TEXT, BACK);
-    text(x, 212, value, strlen(value) <= 4 ? 2 : 1, color, BACK);
+    uint16_t box = darker(bg);
+    char shown[19];
+    strncpy(shown, show_value ? value : label, 18); shown[18] = 0;
+    unsigned n = (unsigned)strlen(shown);
+    /* As large as it fits with a margin: a value of up to five characters very
+     * large; up to eight in one line; longer in two lines, broken at a space. */
+    paint_fill(x, y, BOX_W, BOX_H, box);
+    const char number[2] = {(char)('1' + col), 0};      /* the knob's number in the corner */
+    text(x + 3U, y + 3U, number, 1, ink, box);
+    if (show_value && n <= 5U) {
+        text(x + (BOX_W - 18U * n + 1U) / 2U, y + 14U, shown, 3, ink, box);
+        return;
+    }
+    if (n <= 8U) {
+        text(x + (BOX_W - 12U * n + 1U) / 2U, y + 17U, shown, 2, ink, box);
+        return;
+    }
+    /* The space that leaves both lines shortest. */
+    unsigned best = 0, longest = 99;
+    for (unsigned i = 1; i + 1 < n; ++i)
+        if (shown[i] == ' ') {
+            unsigned a = i, b = n - i - 1U, m = a > b ? a : b;
+            if (m < longest) { longest = m; best = i; }
+        }
+    if (best && longest <= 8U) {
+        char first[10];
+        memcpy(first, shown, best); first[best] = 0;
+        const char *second = shown + best + 1U;
+        text(x + (BOX_W - 12U * best + 1U) / 2U, y + 10U, first, 2, ink, box);
+        text(x + (BOX_W - 12U * (unsigned)strlen(second) + 1U) / 2U, y + 28U, second, 2, ink, box);
+        return;
+    }
+    text(x + (BOX_W - 6U * n + 1U) / 2U, y + 20U, shown, 1, ink, box);
 }
-static void steel_draw(void);
+static void arp_draw(void);
 static void paint_flush(void)
 {
     uint32_t started = fm1_millis();
@@ -192,7 +237,7 @@ static void paint_flush(void)
         paint_x = left;
         paint_end = left + width;
         memset(cache, 0xff, sizeof *cache);
-        steel_draw();
+        arp_draw();
         /* Rasterize directly into the tightly packed DMA rectangle. */
         if (fm1_screen_submit(left, paint_top, width, PAINT_ROWS,
                             paint_pixels, width * PAINT_ROWS)) {
@@ -210,25 +255,24 @@ static void paint_flush(void)
     cache = &saved_cache;
 }
 
-#include "steel_screen.inc"
+#include "arp_screen.inc"
 
 /* The SDK keeps its Bluetooth runtime only while the APP references it (the
- * firmware checks require it). GLIDER has no Bluetooth page, so these
+ * firmware checks require it). ARPHONY has no Bluetooth page, so these
  * references keep BLE MIDI and Bluetooth audio linked and working. */
-static void *const steel_bluetooth_runtime[] = {
+static void *const arp_bluetooth_runtime[] = {
     (void *)fm1_ble_set_role, (void *)fm1_ble_scan, (void *)fm1_ble_connect, (void *)fm1_ble_disconnect,
     (void *)fm1_ble_get_status, (void *)fm1_ble_get_device, (void *)fm1_bluetooth_configure,
     (void *)fm1_bluetooth_get_status, (void *)groove_settings_radio, (void *)groove_settings_radio_flags,
 };
 
 /* Written once at start-up, so the linker keeps the table and its targets. */
-static void *volatile steel_bluetooth_keep[sizeof steel_bluetooth_runtime / sizeof steel_bluetooth_runtime[0]];
+static void *volatile arp_bluetooth_keep[sizeof arp_bluetooth_runtime / sizeof arp_bluetooth_runtime[0]];
 void groove_screen_init(void)
 {
-    for (unsigned i = 0; i < sizeof steel_bluetooth_runtime / sizeof steel_bluetooth_runtime[0]; ++i)
-        steel_bluetooth_keep[i] = steel_bluetooth_runtime[i];
-    steel_init();
-    steel_drums_init();
+    for (unsigned i = 0; i < sizeof arp_bluetooth_runtime / sizeof arp_bluetooth_runtime[0]; ++i)
+        arp_bluetooth_keep[i] = arp_bluetooth_runtime[i];
+    arp_init();
     memset(paint_left, FM1_SCREEN_WIDTH, sizeof paint_left);
     memset(paint_right, 0, sizeof paint_right);
     paint_next = paint_rendering = paint_priority = 0;
@@ -236,24 +280,24 @@ void groove_screen_init(void)
     fm1_controls_init();
     for (unsigned key = 0; key < 41; ++key) fm1_led_set(key, 0);
     fm1_screen_init();
-    steel_ready = 0;
+    arp_ready = 0;
 }
 void groove_screen_control(void)
 {
     struct fm1_controls controls;
     fm1_controls_read(&controls);
-    steel_control(&controls);
+    arp_control(&controls);
 }
-/* MIDI Machine Control from transfer.c: Play/Stop drive the drum track. */
+/* MIDI Machine Control from transfer.c: Play/Stop drive the arpeggio. */
 void groove_screen_mmc(unsigned command)
 {
-    if (command == 1 || command == 9) steel_drums_transport(0);       /* stop, pause */
-    else if (command == 2 || command == 3) steel_drums_transport(1);  /* play, deferred play */
+    if (command == 1 || command == 9) arp_transport(0);       /* stop, pause */
+    else if (command == 2 || command == 3) arp_transport(1);  /* play, deferred play */
 }
-void groove_screen_tap(uint32_t now) { steel_tap(now); }
+void groove_screen_tap(uint32_t now) { arp_tap(now); }
 
 #ifdef FM1_HOST_TEST
-/* Browser simulator hooks. The GLIDER panel has no touch targets on the
+/* Browser simulator hooks. The ARPHONY panel has no touch targets on the
  * LCD and no FM1 project pages; these keep the workbench working. */
 static unsigned web_fine;
 void groove_screen_web_fine(unsigned fine) { web_fine = fine; }

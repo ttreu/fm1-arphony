@@ -4,7 +4,7 @@
 Speaks the same SysEx update protocol as the Workbench page
 (build/official-web/*.html, class Updater) and checks the package the same
 way. Only for an FM-1 that already runs FM1 Open firmware (Official Open,
-GLIDER, GLITCH ...). Stock V15, third-party firmware, recovery and going back
+GLIDER, GLITCH, ARPHONY ...). Stock V15, third-party firmware, recovery and going back
 to stock stay with the Workbench page ("Recovery & force update").
 
     python3 tools/flash_fm1.py ports              # list MIDI ports
@@ -12,7 +12,7 @@ to stock stay with the Workbench page ("Recovery & force update").
     python3 tools/flash_fm1.py check [package]    # check the package, no device needed
     python3 tools/flash_fm1.py flash [package]    # flash (asks for confirmation)
 
-Package: build/dx7/generated/FM1-GLIDER.fwsc with its metadata
+Package: build/dx7/generated/FM1-ARPHONY.fwsc with its metadata
 build/dx7/web-package.json (written by tools/build_mac.py). Needs
 python-rtmidi (python3 -m pip install python-rtmidi).
 
@@ -29,7 +29,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_PACKAGE = ROOT / 'build/dx7/generated/FM1-GLIDER.fwsc'
+DEFAULT_PACKAGE = ROOT / 'build/dx7/generated/FM1-ARPHONY.fwsc'
 DEFAULT_META = ROOT / 'build/dx7/web-package.json'
 VENDOR_LOADER = 'ef1f2db89b011fa53e71df363f0122de0ea896618c53fb53e8da676322004541'
 START_UPDATE = [240, 34, 36, 53, 127, 247]       # same bytes as the Workbench
