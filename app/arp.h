@@ -97,6 +97,7 @@ unsigned arp_chord_position(void);      /* index into the progression (HAND: 0) 
 unsigned arp_chord_count(void);
 void arp_chord_name(unsigned index, char out[16]);
 unsigned arp_step_position(void);       /* riff step 0..15 */
+unsigned arp_chord_ms_left(void);       /* until the next chord; ~0 = none coming */
 unsigned arp_chord_shade(unsigned index); /* display colour: root pitch class, +16 for minor */
 unsigned arp_pattern_length(void);
 int arp_pattern_step(unsigned step);    /* ladder index, -1 rest, -2 tie */

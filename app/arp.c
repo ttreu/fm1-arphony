@@ -965,6 +965,16 @@ unsigned arp_chord_shade(unsigned index)
     return c->root % 12U | (minor ? 16U : 0U);
 }
 unsigned arp_step_position(void) { return arp_now_step; }
+/* Milliseconds until the next chord of the progression (the display's fairy
+ * swings her wand on it); ~0 when no change is coming (stopped, HAND, one chord). */
+unsigned arp_chord_ms_left(void)
+{
+    const struct arp_song *s = &arp_songs[arp_song_index];
+    if (!arp_now_running || hand || s->chords < 2U || s->chord_ticks == ARP_HOLD) return ~0U;
+    unsigned rel = arp_now_rel, bpm = arp_bpm();
+    if (rel >= s->chord_ticks || !bpm) return 0;
+    return (s->chord_ticks - rel) * 60000U / (bpm * ARP_PPQN);
+}
 unsigned arp_pattern_length(void) { return pattern_len(current.value[AP_PATTERN] < PATTERNS ? current.value[AP_PATTERN] : 0); }
 int arp_pattern_step(unsigned i) /* as published (after any nudge) */
 {

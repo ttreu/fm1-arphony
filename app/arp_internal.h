@@ -63,6 +63,7 @@ extern volatile uint8_t arp_jump_serial;  /* HAND chord: switch on the next beat
 extern volatile uint8_t arp_restart_serial; /* MIDI start: back to the first beat */
 /* Read back by the control task. */
 extern volatile uint8_t arp_now_chord, arp_now_step, arp_now_running;
+extern volatile uint16_t arp_now_rel;
 extern volatile int8_t arp_now_note[3];
 extern volatile uint32_t arp_now_count;   /* riff notes started (tests) */
 #endif

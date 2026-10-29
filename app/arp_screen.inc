@@ -88,6 +88,127 @@ static const uint16_t stage_idle[12] = {0xcd53, 0x9d59, 0xbe53, 0xbcf9, 0x9e55, 
  * progression dots, the riff bars, preset and key. */
 enum { KNOBS_TOP = 22, CHORD_TOP = 132, RIFF_TOP = 184, LINE_TOP = 226 };
 static uint32_t knob_until[4];                      /* a turned knob shows its value until then */
+/* A fairy hovers to the right of the chord name, in the ink colour of the
+ * screen: she floats gently and beats her wings. Shortly before the next
+ * chord she winds up her wand, and on the change she swings it towards the
+ * chord and it sprays a few small stars. A chord name too long to leave room
+ * hides her. Sprite: 1 bit per pixel, one frame per wand pose and wing beat. */
+enum { FAIRY_W = 34, FAIRY_H = 44, FAIRY_DRIFT = 3, FAIRY_X = 238 - FAIRY_DRIFT - FAIRY_W, FAIRY_Y = CHORD_TOP + 4,
+       FAIRY_STARS = 10, FAIRY_WINDUP_MS = 320, FAIRY_SWING_MS = 420 };
+static const uint64_t fairy_sprite[3][3][FAIRY_H] = {   /* pose (rest, wound up, swung) x wing frame */
+    {
+        {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000008, 0x001e003c, 0x0f3f001c, 0x0fbf0018, 0x0f9ff008, 0x07dff008, 0x07c7f810, 0x77eff810, 0xffeff810, 0x7feff810, 0x7fe7f810, 0x1ff3f070, 0x0ffbe1f0, 0x01f3ffc0, 0x0007ff00, 0x03e7c000, 0x07f78000, 0x0fe78000, 0x1fcfc000, 0x061fe000, 0x001fa000, 0x003fbe00, 0x003f8000, 0x007fc000, 0x00ffc000, 0x00ffc000, 0x00ffc000, 0x007fc000, 0x007e0000, 0x00660000, 0x00ee0000, 0x00cc0000, 0x01cc0000, 0x018c0000, 0x03180000, 0x06300000, 0x06300000, 0x0c600000, 0x00400000},
+        {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000008, 0x001e003c, 0x003f001c, 0x003f0018, 0x101ff008, 0x1f1ff008, 0x1f87f810, 0x1fcff810, 0x1feff810, 0x0feff810, 0x7fe7f810, 0xfff3f070, 0x7ff3e1f0, 0x3ff3ffc0, 0x0fc7ff00, 0x0007c000, 0x03f78000, 0x07e78000, 0x07cfc000, 0x0fdfe000, 0x001fa000, 0x003fbe00, 0x003f8000, 0x007fc000, 0x00ffc000, 0x00ffc000, 0x00ffc000, 0x007fc000, 0x007e0000, 0x00660000, 0x00ee0000, 0x00cc0000, 0x01cc0000, 0x018c0000, 0x03180000, 0x06300000, 0x06300000, 0x0c600000, 0x00400000},
+        {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000008, 0x001e003c, 0x003f001c, 0x003f0018, 0x001ff008, 0x001ff008, 0x0007f810, 0x1e0ff810, 0x3f8ff810, 0x3fcff810, 0x1fe7f810, 0x1fe3f070, 0x1ff3e1f0, 0x3ff3ffc0, 0x7ff7ff00, 0x3fc7c000, 0x07f78000, 0x01e78000, 0x03cfc000, 0x03dfe000, 0x039fa000, 0x003fbe00, 0x003f8000, 0x007fc000, 0x00ffc000, 0x00ffc000, 0x00ffc000, 0x007fc000, 0x007e0000, 0x00660000, 0x00ee0000, 0x00cc0000, 0x01cc0000, 0x018c0000, 0x03180000, 0x06300000, 0x06300000, 0x0c600000, 0x00400000}},
+    {
+        {0x00000000, 0x00000000, 0x00000000, 0x00004000, 0x0000f000, 0x0000e000, 0x001e3000, 0x0f3f0800, 0x0fbf0c00, 0x0f9ff600, 0x07dff300, 0x07c7fe00, 0x77effe00, 0xffeffe00, 0x7feffc00, 0x7fe7fc00, 0x1ff3f800, 0x0ffbf000, 0x01f3e000, 0x0007e000, 0x03e7c000, 0x07f78000, 0x0fe78000, 0x1fcfc000, 0x061fe000, 0x001fa000, 0x003fbe00, 0x003f8000, 0x007fc000, 0x00ffc000, 0x00ffc000, 0x00ffc000, 0x007fc000, 0x007e0000, 0x00660000, 0x00ee0000, 0x00cc0000, 0x01cc0000, 0x018c0000, 0x03180000, 0x06300000, 0x06300000, 0x0c600000, 0x00400000},
+        {0x00000000, 0x00000000, 0x00000000, 0x00004000, 0x0000f000, 0x0000e000, 0x001e3000, 0x003f0800, 0x003f0c00, 0x101ff600, 0x1f1ff300, 0x1f87fe00, 0x1fcffe00, 0x1feffe00, 0x0feffc00, 0x7fe7fc00, 0xfff3f800, 0x7ff3f000, 0x3ff3e000, 0x0fc7e000, 0x0007c000, 0x03f78000, 0x07e78000, 0x07cfc000, 0x0fdfe000, 0x001fa000, 0x003fbe00, 0x003f8000, 0x007fc000, 0x00ffc000, 0x00ffc000, 0x00ffc000, 0x007fc000, 0x007e0000, 0x00660000, 0x00ee0000, 0x00cc0000, 0x01cc0000, 0x018c0000, 0x03180000, 0x06300000, 0x06300000, 0x0c600000, 0x00400000},
+        {0x00000000, 0x00000000, 0x00000000, 0x00004000, 0x0000f000, 0x0000e000, 0x001e3000, 0x003f0800, 0x003f0c00, 0x001ff600, 0x001ff300, 0x0007fe00, 0x1e0ffe00, 0x3f8ffe00, 0x3fcffc00, 0x1fe7fc00, 0x1fe3f800, 0x1ff3f000, 0x3ff3e000, 0x7ff7e000, 0x3fc7c000, 0x07f78000, 0x01e78000, 0x03cfc000, 0x03dfe000, 0x039fa000, 0x003fbe00, 0x003f8000, 0x007fc000, 0x00ffc000, 0x00ffc000, 0x00ffc000, 0x007fc000, 0x007e0000, 0x00660000, 0x00ee0000, 0x00cc0000, 0x01cc0000, 0x018c0000, 0x03180000, 0x06300000, 0x06300000, 0x0c600000, 0x00400000}},
+    {
+        {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x001e0000, 0x0f3f0000, 0x0fbf0000, 0x0f9ff000, 0x07dff000, 0x07c7f800, 0x77eff800, 0xffeff800, 0x7feff800, 0x7fe7f800, 0x1ff3f000, 0x0ffbe000, 0x01f3c004, 0x0007f80f, 0x03e7fe0e, 0x07f78fba, 0x0fe781e0, 0x1fcfc040, 0x061fe000, 0x001fa000, 0x003fbe00, 0x003f8000, 0x007fc000, 0x00ffc000, 0x00ffc000, 0x00ffc000, 0x007fc000, 0x007e0000, 0x00660000, 0x00ee0000, 0x00cc0000, 0x01cc0000, 0x018c0000, 0x03180000, 0x06300000, 0x06300000, 0x0c600000, 0x00400000},
+        {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x001e0000, 0x003f0000, 0x003f0000, 0x101ff000, 0x1f1ff000, 0x1f87f800, 0x1fcff800, 0x1feff800, 0x0feff800, 0x7fe7f800, 0xfff3f000, 0x7ff3e000, 0x3ff3c004, 0x0fc7f80f, 0x0007fe0e, 0x03f78fba, 0x07e781e0, 0x07cfc040, 0x0fdfe000, 0x001fa000, 0x003fbe00, 0x003f8000, 0x007fc000, 0x00ffc000, 0x00ffc000, 0x00ffc000, 0x007fc000, 0x007e0000, 0x00660000, 0x00ee0000, 0x00cc0000, 0x01cc0000, 0x018c0000, 0x03180000, 0x06300000, 0x06300000, 0x0c600000, 0x00400000},
+        {0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x001e0000, 0x003f0000, 0x003f0000, 0x001ff000, 0x001ff000, 0x0007f800, 0x1e0ff800, 0x3f8ff800, 0x3fcff800, 0x1fe7f800, 0x1fe3f000, 0x1ff3e000, 0x3ff3c004, 0x7ff7f80f, 0x3fc7fe0e, 0x07f78fba, 0x01e781e0, 0x03cfc040, 0x03dfe000, 0x039fa000, 0x003fbe00, 0x003f8000, 0x007fc000, 0x00ffc000, 0x00ffc000, 0x00ffc000, 0x007fc000, 0x007e0000, 0x00660000, 0x00ee0000, 0x00cc0000, 0x01cc0000, 0x018c0000, 0x03180000, 0x06300000, 0x06300000, 0x0c600000, 0x00400000}},
+};
+static const uint8_t fairy_tip[3][2] = {{4, 7}, {14, 5}, {2, 20}};        /* wand star per pose */
+static const int8_t fairy_sine[32] = {0, 3, 6, 9, 11, 13, 15, 16, 16, 16, 15, 13, 11, 9, 6, 3, 0, -3, -6, -9, -11, -13, -15, -16, -16, -16, -15, -13, -11, -9, -6, -3};
+static unsigned fairy_lo = FM1_SCREEN_WIDTH;          /* first free column right of the chord name */
+static uint32_t fairy_chord;                          /* signature of the chord shown */
+static struct {
+    unsigned shown, wings, pose, sx, sy, swinging, box[4], had_box;
+    uint32_t chord, swing_at, last, seed;
+} fairy;
+static struct { int16_t x, y, vx, vy; uint8_t life; } fairy_star[FAIRY_STARS]; /* 1/16 pixel */
+static int fairy_wave(uint32_t now, uint32_t period, int amplitude) /* -amplitude..amplitude */
+{
+    return fairy_sine[now % period * 32U / period] * amplitude / 16;
+}
+static unsigned fairy_random(unsigned n)
+{
+    fairy.seed = fairy.seed * 1664525U + 1013904223U;
+    return (fairy.seed >> 16) % n;
+}
+static void fairy_spray(void)                         /* small stars from the wand tip */
+{
+    for (unsigned i = 0, made = 0; i < FAIRY_STARS && made < 6U; ++i)
+        if (!fairy_star[i].life) {
+            fairy_star[i].x = (int16_t)((fairy.sx + fairy_tip[2][0]) * 16U);
+            fairy_star[i].y = (int16_t)((fairy.sy + fairy_tip[2][1]) * 16U);
+            fairy_star[i].vx = (int16_t)(-6 - (int)fairy_random(18));      /* towards the chord */
+            fairy_star[i].vy = (int16_t)(-10 + (int)fairy_random(18));
+            fairy_star[i].life = (uint8_t)(12U + fairy_random(10));
+            ++made;
+        }
+}
+static void fairy_move(uint32_t now)
+{
+    static const uint8_t flap[4] = {0, 1, 2, 1};
+    if (!fairy.seed) fairy.seed = now | 1U;
+    fairy.wings = flap[now / 90U % 4U];
+    fairy.sx = (unsigned)(FAIRY_X + fairy_wave(now, 4700U, FAIRY_DRIFT));
+    fairy.sy = (unsigned)(FAIRY_Y + fairy_wave(now, 2100U, 2));
+    if (fairy_chord != fairy.chord) {                     /* the new chord: swing */
+        if (fairy.chord) { fairy.swing_at = now; fairy.swinging = 1; fairy_spray(); }
+        fairy.chord = fairy_chord;
+    }
+    if (fairy.swinging && now - fairy.swing_at >= FAIRY_SWING_MS) fairy.swinging = 0;
+    unsigned left = arp_chord_ms_left();
+    fairy.pose = fairy.swinging ? 2U : left <= FAIRY_WINDUP_MS ? 1U : 0U;
+    unsigned steps = (now - fairy.last) / 40U;            /* the stars drift and sink */
+    if (steps > 4U) { steps = 4U; fairy.last = now; } else fairy.last += steps * 40U;
+    while (steps--)
+        for (unsigned i = 0; i < FAIRY_STARS; ++i)
+            if (fairy_star[i].life) {
+                fairy_star[i].x = (int16_t)(fairy_star[i].x + fairy_star[i].vx);
+                fairy_star[i].y = (int16_t)(fairy_star[i].y + fairy_star[i].vy);
+                fairy_star[i].vx = (int16_t)(fairy_star[i].vx * 7 / 8);
+                fairy_star[i].vy = (int16_t)(fairy_star[i].vy + 2);
+                int x = fairy_star[i].x / 16, y = fairy_star[i].y / 16;
+                if (--fairy_star[i].life == 0 || x < (int)fairy_lo + 1 || x > 237 || y < (int)CHORD_TOP + 1 || y > (int)RIFF_TOP - 3)
+                    fairy_star[i].life = 0;
+            }
+}
+/* Called by arp_draw after the chord: the marking pass updates her and marks
+ * her area; the band pass draws her. */
+static void arp_draw_fairy(uint16_t ink)
+{
+    if (!paint_rendering) {
+        uint32_t keep = paint_priority;                   /* she never delays real feedback */
+        if (fairy.had_box) paint_mark(fairy.box[0], fairy.box[1], fairy.box[2] - fairy.box[0], fairy.box[3] - fairy.box[1]);
+        fairy.had_box = 0;
+        fairy.shown = fairy_lo + FAIRY_DRIFT <= FAIRY_X;
+        if (fairy.shown) {
+            fairy_move(fm1_millis());
+            unsigned x0 = fairy.sx, y0 = fairy.sy, x1 = fairy.sx + FAIRY_W, y1 = fairy.sy + FAIRY_H;
+            for (unsigned i = 0; i < FAIRY_STARS; ++i)
+                if (fairy_star[i].life) {
+                    unsigned x = (unsigned)(fairy_star[i].x / 16), y = (unsigned)(fairy_star[i].y / 16);
+                    if (x - 1U < x0) x0 = x - 1U;
+                    if (x + 2U > x1) x1 = x + 2U;
+                    if (y - 1U < y0) y0 = y - 1U;
+                    if (y + 2U > y1) y1 = y + 2U;
+                }
+            fairy.box[0] = x0; fairy.box[1] = y0; fairy.box[2] = x1; fairy.box[3] = y1; fairy.had_box = 1;
+            paint_mark(x0, y0, x1 - x0, y1 - y0);
+        } else memset(fairy_star, 0, sizeof fairy_star);
+        paint_priority = keep;
+        return;
+    }
+    if (!fairy.shown || paint_top >= fairy.box[3] || paint_top + PAINT_ROWS <= fairy.box[1]) return;
+    for (unsigned i = 0; i < FAIRY_STARS; ++i)
+        if (fairy_star[i].life) {
+            unsigned x = (unsigned)(fairy_star[i].x / 16), y = (unsigned)(fairy_star[i].y / 16);
+            paint_fill(x, y, 1, 1, ink);
+            if (fairy_star[i].life > 6U) { paint_fill(x - 1U, y, 3, 1, ink); paint_fill(x, y - 1U, 1, 3, ink); }
+        }
+    const uint64_t *rows = fairy_sprite[fairy.pose][fairy.wings];
+    for (unsigned row = 0; row < FAIRY_H; ++row) {
+        unsigned y = fairy.sy + row;
+        if (y < paint_top || y >= paint_top + PAINT_ROWS) continue;
+        uint64_t bits = rows[row];
+        for (unsigned col = 0; bits; ++col, bits >>= 1)
+            if (bits & 1U) paint_fill(fairy.sx + col, y, 1, 1, ink);
+    }
+}
 static unsigned arp_stage_shade(void)
 {
     if (!arp_running()) return 64U | arp_get(AP_KEY) % 12U;
@@ -119,7 +240,6 @@ static void arp_draw_header(unsigned shade)
         strcat(value, arp_bpm_external() ? " EXT" : " BPM");
         text(232U - 6U * (unsigned)strlen(value), 7, value, 1, ink, bg);
     }
-
 }
 static void arp_draw_chord(unsigned shade)
 {
@@ -129,6 +249,8 @@ static void arp_draw_chord(unsigned shade)
     if (!arp_is_hand()) arp_chord_name(arp_chord_position(), value);
     unsigned n = (unsigned)strlen(value), scale = n <= 9U ? 4U : 3U, w = 6U * scale * n;
     text(w < 240U ? (240U - w) / 2U : 0U, CHORD_TOP + 4U, value, scale, ink, bg);
+    fairy_lo = (w < 240U ? (240U - w) / 2U + w : 240U) + 6U;
+    fairy_chord = signature(arp_chord_position() + 1U, value, n);
     unsigned count = arp_is_hand() ? 1U : arp_chord_count(), now = arp_chord_position();
     if (count > 8U) count = 8U;
     unsigned x0 = 120U - count * 6U;
@@ -203,6 +325,7 @@ static void arp_draw(void)
     arp_draw_chord(shade);
     arp_draw_riff(shade);
     arp_draw_line(shade);
+    arp_draw_fairy(ink);
 }
 /* LEDs: the keys of the current chord's tones. */
 static void arp_leds(void)
@@ -356,7 +479,7 @@ static void arp_control(const struct fm1_controls *c)
         if (knob_until[col] && (int32_t)(now - knob_until[col]) >= 0) { knob_until[col] = 0; changed = 1; }
     arp_leds();
     if (saved_cache.shown_page == ~0U) arp_full = 1; /* LCD transfer error: repaint all */
-    unsigned period = arp_running() ? 40U : 100U; /* the playhead moves */
+    unsigned period = arp_running() || fairy.shown ? 40U : 100U; /* the playhead and the fairy move */
     if (changed || arp_full || now - arp_frame_ms >= period) {
         arp_frame_ms = now;
         saved_cache.shown_page = 0;

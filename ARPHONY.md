@@ -41,6 +41,10 @@ knob and the box shows the value for 1.5 s. Below the chord name, the
 progression as dots, the riff as bars with the playhead, and preset, key and
 mode.
 
+A small fairy hovers to the right of the chord name. Shortly before the next
+chord she winds up her wand, and on the change she swings it and it sprays a
+few stars. She steps aside (hides) when a long chord name needs the room.
+
 ## Pages
 
 | Button | Page | K1 | K2 | K3 | K4 |

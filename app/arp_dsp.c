@@ -15,6 +15,7 @@ struct arp_song arp_songs[2];
 volatile uint8_t arp_patch_index, arp_song_index;
 volatile uint8_t arp_run, arp_jump_serial, arp_restart_serial;
 volatile uint8_t arp_now_chord, arp_now_step, arp_now_running;
+volatile uint16_t arp_now_rel;            /* ticks since the chord started (display) */
 volatile int8_t arp_now_note[3] = {-1, -1, -1};
 volatile uint32_t arp_now_count;
 
@@ -214,6 +215,7 @@ static FM1_AUDIO_CODE void play_tick(const struct arp_song *s, float samples_per
         seq.next_step = (uint16_t)(seq.step * s->step_ticks + ((seq.step & 1U) ? s->swing_ticks : 0U));
     }
     if (seq.rel < 0xfffeU) ++seq.rel;
+    arp_now_rel = seq.rel;
     if (++seq.beat >= ARP_PPQN) seq.beat = 0;
     if (++seq.sub >= ARP_PPQN / 4) {
         seq.sub = 0;
