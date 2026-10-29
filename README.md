@@ -61,7 +61,11 @@ and the original V15 recovery image, for Chrome/Edge).
 
 ## Install
 
-Open `FM1-ARPHONY.html` in Chrome or Edge, connect the FM-1 by USB and use
+Downloads (flashing page with this firmware and the original V15 recovery
+image, source code) are on [subcity.at/fm1-arphony](https://subcity.at/fm1-arphony/);
+a browser simulator is there too.
+
+Open the flashing page (`fm1-arphony-workbench.html`, or `FM1-ARPHONY.html` from your own build) in Chrome or Edge, connect the FM-1 by USB and use
 *Device update*; the first install from the stock firmware needs *Recovery &
 force update*. Back up projects, voices and samples first. Back to stock: same
 page, *Recovery & force update*, original V15. With FM1 Open firmware already
