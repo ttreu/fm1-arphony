@@ -4,6 +4,12 @@ ARPHONY is a custom firmware for the **M-VAVE FM-1**. It plays repeating
 single-note riffs over slowly moving modal chords: a riff on top, and below
 it the harmony – a bass note plus up to two chord tones (at most three notes).
 
+<p align="center"><img src="docs/img/panel.webp" alt="ARPHONY on the FM-1 (browser simulator): the display coloured by the chord, the knob boxes and the riff" width="760"></p>
+
+<p align="center"><img src="docs/img/lcd-play.webp" alt="ARPHONY display" width="250"> <img src="docs/img/lcd-knob.webp" alt="ARPHONY display" width="250"> <img src="docs/img/lcd-fx.webp" alt="ARPHONY display" width="250"></p>
+
+<p align="center"><b><a href="https://subcity.at/flash/fm1-arphony/">Install in the browser</a></b> · <a href="https://subcity.at/demo/fm1-arphony/">Try the simulator</a> · <a href="https://subcity.at/fm1-arphony/">Downloads &amp; guide</a></p>
+
 > **Beta – a hobby project.** ARPHONY runs on a real FM-1 (tested on one unit,
 > October 2026), in the browser simulator and in native tests. Test reports
 > from more FM-1 owners are very welcome. No support is promised.
@@ -61,15 +67,17 @@ and the original V15 recovery image, for Chrome/Edge).
 
 ## Install
 
-Downloads (flashing page with this firmware and the original V15 recovery
-image, source code) are on [subcity.at/fm1-arphony](https://subcity.at/fm1-arphony/);
-a browser simulator is there too.
+**In the browser:** open [subcity.at/flash/fm1-arphony](https://subcity.at/flash/fm1-arphony/) in Chrome or
+Edge, connect the FM-1 by USB and use *Device update* (coming from the stock firmware:
+*Recovery & force update*). The page also holds the original M-VAVE V15 firmware to go back.
+The same page is in the download on [subcity.at/fm1-arphony](https://subcity.at/fm1-arphony/), together with the source code.
 
-Open the flashing page (`fm1-arphony-workbench.html`, or `FM1-ARPHONY.html` from your own build) in Chrome or Edge, connect the FM-1 by USB and use
-*Device update*; the first install from the stock firmware needs *Recovery &
-force update*. Back up projects, voices and samples first. Back to stock: same
-page, *Recovery & force update*, original V15. With FM1 Open firmware already
-on the device: `python3 tools/flash_fm1.py flash`.
+**Before flashing:** back up your projects, voices and samples with the firmware that is
+on the device now. ARPHONY does not use them; user presets (SAVE) live in the last 64 KB
+of the sample area, so the first SAVE overwrites the end of the sample bank.
+
+With FM1 Open firmware already on the device, macOS users can also flash from the
+command line: `python3 tools/flash_fm1.py flash` (see ARPHONY.md).
 
 ## License
 
