@@ -1,0 +1,7 @@
+{
+  "what": "Modal arpeggiator: a riff keeps turning on top while the bass and chord tones move through a mode below. Turn the mode and the chords recolour, and the riff steps to the nearest chord tones. Random riffs and chords, chords on the keys, user presets and MIDI out.",
+  "kinds": [
+    "chords"
+  ],
+  "play": "https://subcity.at/demo/fm1-arphony/"
+}
